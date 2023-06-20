@@ -8,6 +8,7 @@ import board
 import busio
 from digitalio import DigitalInOut, Direction, Pull
 from adafruit_pm25.i2c import PM25_I2C
+import serial
 
 #initialize variables from config file
 SSID = config.ssid
@@ -21,42 +22,7 @@ wlan.connect(SSID, PASSWORD)
 print(wlan.isconnected())
 
 
-while(True)
-
-senseair_s8 = SenseairS8() 
-# get CO2 value
-CO2 = senseair_s8.co2()
-
-# Get I2C bus
-bus = smbus.SMBus(1)
-
-# SHT30 address, 0x44(68)
-# Send measurement command, 0x2C(44)
-#		0x06(06)	High repeatability measurement
-bus.write_i2c_block_data(0x44, 0x2C, [0x06])
-
-time.sleep(0.5)
-
-# SHT30 address, 0x44(68)
-# Read data back from 0x00(00), 6 bytes
-# cTemp MSB, cTemp LSB, cTemp CRC, Humididty MSB, Humidity LSB, Humidity CRC
-data = bus.read_i2c_block_data(0x44, 0x00, 6)
-
-# Calculate the data
-cTemp = ((((data[0] * 256.0) + data[1]) * 175) / 65535.0) - 45
-fTemp = cTemp * 1.8 + 32
-humidity = 100 * (data[3] * 256 + data[4]) / 65535.0
-
-reset_pin = None
-# If you have a GPIO, its not a bad idea to connect it to the RESET pin
-# reset_pin = DigitalInOut(board.G0)
-# reset_pin.direction = Direction.OUTPUT
-# reset_pin.value = False
-
-
-import serial
 uart = serial.Serial("/dev/ttyS0", baudrate=9600, timeout=0.25)
-
 # Create library object, use 'slow' 100KHz frequency!
 i2c = busio.I2C(board.SCL, board.SDA, frequency=100000)
 # Connect to a PM2.5 sensor over I2C
@@ -64,7 +30,39 @@ pm25 = PM25_I2C(i2c, reset_pin)
 
 print("Found PM2.5 sensor, reading data...")
 
-while True:
+
+
+while(True)
+    senseair_s8 = SenseairS8() 
+    # get CO2 value
+    CO2 = senseair_s8.co2()
+
+    # Get I2C bus
+    bus = smbus.SMBus(1)
+
+    # SHT30 address, 0x44(68)
+    # Send measurement command, 0x2C(44)
+    #		0x06(06)	High repeatability measurement
+    bus.write_i2c_block_data(0x44, 0x2C, [0x06])
+
+    time.sleep(0.5)
+
+    # SHT30 address, 0x44(68)
+    # Read data back from 0x00(00), 6 bytes
+    # cTemp MSB, cTemp LSB, cTemp CRC, Humididty MSB, Humidity LSB, Humidity CRC
+    data = bus.read_i2c_block_data(0x44, 0x00, 6)
+
+    # Calculate the data
+    cTemp = ((((data[0] * 256.0) + data[1]) * 175) / 65535.0) - 45
+    fTemp = cTemp * 1.8 + 32
+    humidity = 100 * (data[3] * 256 + data[4]) / 65535.0
+
+    reset_pin = None
+    # If you have a GPIO, its not a bad idea to connect it to the RESET pin
+    # reset_pin = DigitalInOut(board.G0)    
+    # reset_pin.direction = Direction.OUTPUT
+    # reset_pin.value = False
+
     time.sleep(1)
 
     try:
