@@ -33,30 +33,29 @@ print("Found PM2.5 sensor, reading data...")
 
 
 while(True)
+# Senseair s8
     senseair_s8 = SenseairS8() 
     # get CO2 value
     CO2 = senseair_s8.co2()
 
+# SHT30
     # Get I2C bus
     bus = smbus.SMBus(1)
-
     # SHT30 address, 0x44(68)
     # Send measurement command, 0x2C(44)
     #		0x06(06)	High repeatability measurement
     bus.write_i2c_block_data(0x44, 0x2C, [0x06])
-
     time.sleep(0.5)
-
     # SHT30 address, 0x44(68)
     # Read data back from 0x00(00), 6 bytes
     # cTemp MSB, cTemp LSB, cTemp CRC, Humididty MSB, Humidity LSB, Humidity CRC
     data = bus.read_i2c_block_data(0x44, 0x00, 6)
-
     # Calculate the data
     cTemp = ((((data[0] * 256.0) + data[1]) * 175) / 65535.0) - 45
     fTemp = cTemp * 1.8 + 32
     humidity = 100 * (data[3] * 256 + data[4]) / 65535.0
 
+# PM2.5
     reset_pin = None
     # If you have a GPIO, its not a bad idea to connect it to the RESET pin
     # reset_pin = DigitalInOut(board.G0)    
