@@ -14,9 +14,6 @@ RST = 24
 
 # Initialize OLED display
 disp = Adafruit_SSD1306.SSD1306_128_64(rst=RST, i2c_address=0x3C, i2c_bus=1)
-disp.begin()
-disp.clear()
-disp.display()
 
 # Load font
 font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 9)
@@ -45,7 +42,7 @@ try:
         #print("Temperature in Celsius : %.2f C" %cTemp)
         print("Temperature in Fahrenheit : %.2f F" %fTemp)
         
-        # Clear display
+        disp.begin()
         disp.clear()
         disp.display()
         
