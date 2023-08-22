@@ -8,7 +8,7 @@ from PIL import ImageDraw
 from PIL import ImageFont
 import serial
 from adafruit_pm25.uart import PM25_UART
-
+import sys
 
 def celsius_to_fahrenheit(celsius):
     fahrenheit = (celsius * 9/5) + 32
@@ -20,12 +20,12 @@ def scd30_initialization():
     # starting at 50KHz
     i2c = busio.I2C(board.SCL, board.SDA, frequency=50000)
     scd = adafruit_scd30.SCD30(i2c)
-    # Raspberry Pi pin configuration:
-    RST = 24
     return scd
 
 
 def oled_initialization():
+    # Raspberry Pi pin configuration:
+    RST = 24
     # Initialize OLED display
     disp = Adafruit_SSD1306.SSD1306_128_64(rst=RST, i2c_address=0x3C, i2c_bus=1)
     disp.begin()
@@ -88,7 +88,7 @@ def read_scd(scd):
     temp = "Temp: "
     tempval = ("%.2f F" %fTemp)
     hum = "Humidity: "
-    humval = ("%.2f %%RH" %humidity)  
+    humval = ("%.2f %%RH" %humidity)
     co2 = "CO2: "
     co2val = ("%.2f PPM" %co2ppm)
     return temp, tempval, hum, humval, co2, co2val
@@ -99,9 +99,8 @@ def read_pm25(pm25):
         aqdata = pm25.read()
     except RuntimeError as e:
         print("Error reading from sensor:", e)
-        print("Retrying...")
-        continue
-            
+        sys.exit()
+
     # Assign standard particle data to variables
     pm10 = "PM1.0: "
     pm10val = ("%.2f ug/m^3" %aqdata["pm10 standard"])
@@ -121,25 +120,22 @@ def read_pm25(pm25):
 
 def main():
     scd = scd30_initialization()
-
     disp = oled_initialization()
-
     pm25 = pmsensor_initialization()
-
 
     while True:
         # Read data from scd30 sensor
         temp, tempval, hum, humval, co2, co2val = read_scd(scd)
-        
-        # Display temp and humidity
-        display_sensor_values(disp, {temp, tempval, hum, humval})
-        
-        # Display co2 value
-        display_sensor_values(disp, {co2, co2val})
 
         # Read data from pm2.5 sensor
         pm10, pm10val, pm25, pm25val, pm100, pm100val = read_pm25(pm25)
-        
+
+        # Display temp and humidity
+        display_sensor_values(disp, {temp, tempval, hum, humval})
+
+        # Display co2 value
+        display_sensor_values(disp, {co2, co2val})
+
         # Display pm1.0 value
         display_sensor_values(disp, {pm10, pm10val})
 
@@ -148,3 +144,11 @@ def main():
 
         # Display pm10.0 value
         display_sensor_values(disp, {pm100, pm100val})
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("Script terminated by user")
+        sys.exit()
