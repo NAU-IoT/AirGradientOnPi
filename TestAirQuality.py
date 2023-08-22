@@ -33,7 +33,7 @@ def oled_initialization():
     disp.display()
     # Load font
     font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 9)
-    return disp
+    return disp,font
 
 
 def pmsensor_initialization():
@@ -60,7 +60,7 @@ def display_values(disp, image):
     disp.display()
 
 
-def display_sensor_values(disp, variables):
+def display_sensor_values(disp, font, variables):
     # Create image buffer
     image, draw = create_image_buffer(disp.width, disp.height)
     y_coord = 15
@@ -120,30 +120,30 @@ def read_pm25(pm25):
 
 def main():
     scd = scd30_initialization()
-    disp = oled_initialization()
-    pm25 = pmsensor_initialization()
+    disp, font = oled_initialization()
+    pmsensor = pmsensor_initialization()
 
     while True:
         # Read data from scd30 sensor
         temp, tempval, hum, humval, co2, co2val = read_scd(scd)
 
-        # Read data from pm2.5 sensor
-        pm10, pm10val, pm25, pm25val, pm100, pm100val = read_pm25(pm25)
-
         # Display temp and humidity
-        display_sensor_values(disp, {temp, tempval, hum, humval})
+        display_sensor_values(disp, font, [temp, tempval, hum, humval])
 
         # Display co2 value
-        display_sensor_values(disp, {co2, co2val})
+        display_sensor_values(disp, font, [co2, co2val])
+
+        # Read data from pm2.5 sensor
+        pm10, pm10val, pm25, pm25val, pm100, pm100val = read_pm25(pmsensor)
 
         # Display pm1.0 value
-        display_sensor_values(disp, {pm10, pm10val})
+        display_sensor_values(disp, font, [pm10, pm10val])
 
         # Display pm2.5 value
-        display_sensor_values(disp, {pm25, pm25val})
+        display_sensor_values(disp, font, [pm25, pm25val])
 
         # Display pm10.0 value
-        display_sensor_values(disp, {pm100, pm100val})
+        display_sensor_values(disp, font, [pm100, pm100val])
 
 
 if __name__ == "__main__":
