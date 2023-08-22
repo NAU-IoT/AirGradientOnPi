@@ -46,11 +46,13 @@ def pmsensor_initialization():
     pm25 = PM25_UART(uart)
     return pm25
 
+
 def create_image_buffer(disp_width, disp_height):
     # Create image buffer
     image = Image.new('1', (disp_width, disp_height))
     draw = ImageDraw.Draw(image)
     return image, draw
+
 
 def display_values(disp, image):
     disp.clear()
@@ -67,7 +69,55 @@ def display_sensor_values(disp, variables):
         y_coord += 10
     display_values(disp, image)
     time.sleep(5)
-    
+
+
+def read_scd(scd):
+    if scd.data_available:
+        #print("Data Available!")
+        #print("CO2: %d PPM" % scd.CO2)
+        cTemp = scd.temperature
+        fTemp = (cTemp * 9/5) + 32
+        co2ppm = scd.CO2
+        humidity = scd.relative_humidity
+        #print("Temperature in Fahrenheit : %.2f F" %fTemp)
+        #print("Relative Humidity : %.2f %%RH" %humidity)
+        #print("")
+        #print("Waiting for new data...")
+        #print("")
+    # Assign values to variables
+    temp = "Temp: "
+    tempval = ("%.2f F" %fTemp)
+    hum = "Humidity: "
+    humval = ("%.2f %%RH" %humidity)  
+    co2 = "CO2: "
+    co2val = ("%.2f PPM" %co2ppm)
+    return temp, tempval, hum, humval, co2, co2val
+
+
+def read_pm25(pm25):
+    try:
+        aqdata = pm25.read()
+    except RuntimeError as e:
+        print("Error reading from sensor:", e)
+        print("Retrying...")
+        continue
+            
+    # Assign standard particle data to variables
+    pm10 = "PM1.0: "
+    pm10val = ("%.2f ug/m^3" %aqdata["pm10 standard"])
+    pm25 = "PM2.5: "
+    pm25val = ("%.2f ug/m^3" %aqdata["pm25 standard"])
+    pm100 = "PM10: "
+    pm100val = ("%.2f ug/m^3" %aqdata["pm100 standard"])
+    # Assign environmental particle data to variables
+    #pm1 = "PM1.0: "
+    #pm10val = (aqdata["pm10 env"]
+    #pm25 = "PM2.5: "
+    #pm25val = aqdata["pm25 env"]
+    #pm10 = "PM10: "
+    #pm100val = aqdata["pm100 env"]
+    return pm10, pm10val, pm25, pm25val, pm100, pm100val
+
 
 def main():
     scd = scd30_initialization()
@@ -78,56 +128,17 @@ def main():
 
 
     while True:
-        if scd.data_available:
-            #print("Data Available!")
-            #print("CO2: %d PPM" % scd.CO2)
-            cTemp = scd.temperature
-            fTemp = (cTemp * 9/5) + 32
-            co2ppm = scd.CO2
-            humidity = scd.relative_humidity
-            #print("Temperature in Fahrenheit : %.2f F" %fTemp)
-            #print("Relative Humidity : %.2f %%RH" %humidity)
-            #print("")
-            #print("Waiting for new data...")
-            #print("")
-
-        # Assign values to variables
-        temp = "Temp: "
-        tempval = ("%.2f F" %fTemp)
-        hum = "Humidity: "
-        humval = ("%.2f %%RH" %humidity)  
+        # Read data from scd30 sensor
+        temp, tempval, hum, humval, co2, co2val = read_scd(scd)
+        
         # Display temp and humidity
         display_sensor_values(disp, {temp, tempval, hum, humval})
         
-
-        # Assign values to variables
-        co2 = "CO2: "
-        co2val = ("%.2f PPM" %co2ppm)
         # Display co2 value
         display_sensor_values(disp, {co2, co2val})
 
-
-        try:
-            aqdata = pm25.read()
-        except RuntimeError as e:
-            print("Error reading from sensor:", e)
-            print("Retrying...")
-            continue
-            
-        # Assign standard particle data to variables
-        pm10 = "PM1.0: "
-        pm10val = ("%.2f ug/m^3" %aqdata["pm10 standard"])
-        pm25 = "PM2.5: "
-        pm25val = ("%.2f ug/m^3" %aqdata["pm25 standard"])
-        pm100 = "PM10: "
-        pm100val = ("%.2f ug/m^3" %aqdata["pm100 standard"])
-        # Assign environmental particle data to variables
-        #pm1 = "PM1.0: "
-        #pm10val = (aqdata["pm10 env"]
-        #pm25 = "PM2.5: "
-        #pm25val = aqdata["pm25 env"]
-        #pm10 = "PM10: "
-        #pm100val = aqdata["pm100 env"]
+        # Read data from pm2.5 sensor
+        pm10, pm10val, pm25, pm25val, pm100, pm100val = read_pm25(pm25)
         
         # Display pm1.0 value
         display_sensor_values(disp, {pm10, pm10val})
