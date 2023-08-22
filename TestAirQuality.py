@@ -52,22 +52,21 @@ def create_image_buffer(disp_width, disp_height):
     draw = ImageDraw.Draw(image)
     return image, draw
 
-def display_values(disp):
+def display_values(disp, image):
     disp.clear()
     disp.image(image)
     disp.display()
 
 
-def display_sensor_values(disp, values):
+def display_sensor_values(disp, variables):
+    # Create image buffer
     image, draw = create_image_buffer(disp.width, disp.height)
-    
     y_coord = 15
-    for label, value in values.items():
-        text = f"{label}: {value}"
-        draw.text((32, y_coord), text, font=font, fill=255)
+    for item in variables:
+        draw.text((32, y_coord), item, font=font, fill=255)
         y_coord += 10
-    
-    display_values(disp)
+    display_values(disp, image)
+    time.sleep(5)
     
 
 def main():
@@ -91,33 +90,22 @@ def main():
             #print("")
             #print("Waiting for new data...")
             #print("")
-        # Create image buffer
-        image, draw = create_image_buffer(disp.width, disp.height)
+
         # Assign values to variables
         temp = "Temp: "
         tempval = ("%.2f F" %fTemp)
         hum = "Humidity: "
-        humval = ("%.2f %%RH" %humidity)
-        # Prepare temp and hum for display
-        draw.text((32, 15), temp, font=font, fill=255)
-        draw.text((32, 25), tempval, font=font, fill=255)
-        draw.text((32, 40), hum, font=font, fill=255)
-        draw.text((32, 50), humval, font=font, fill=255)
+        humval = ("%.2f %%RH" %humidity)  
         # Display temp and humidity
-        display_values(disp) 
-        time.sleep(5)
+        display_sensor_values(disp, {temp, tempval, hum, humval})
+        
 
         # Assign values to variables
         co2 = "CO2: "
         co2val = ("%.2f PPM" %co2ppm)
-        # Prepare co2 for display
-        # Create image buffer
-        image, draw = create_image_buffer(disp.width, disp.height)
-        draw.text((32, 15), co2, font=font, fill=255)
-        draw.text((32, 25), co2val, font=font, fill=255)
         # Display co2 value
-        display_values(disp)
-        time.sleep(5)
+        display_sensor_values(disp, {co2, co2val})
+
 
         try:
             aqdata = pm25.read()
@@ -125,6 +113,7 @@ def main():
             print("Error reading from sensor:", e)
             print("Retrying...")
             continue
+            
         # Assign standard particle data to variables
         pm10 = "PM1.0: "
         pm10val = ("%.2f ug/m^3" %aqdata["pm10 standard"])
@@ -140,29 +129,11 @@ def main():
         #pm10 = "PM10: "
         #pm100val = aqdata["pm100 env"]
         
-        # Prepare pm1.0 value for display
-        # Create image buffer
-        image, draw = create_image_buffer(disp.width, disp.height)
-        draw.text((32, 15), pm10, font=font, fill=255)
-        draw.text((32, 25), pm10val, font=font, fill=255)
         # Display pm1.0 value
-        display_values(disp)
-        time.sleep(5)
+        display_sensor_values(disp, {pm10, pm10val})
 
-        # Prepare pm2.5 value for display
-        # Create image buffer
-        image, draw = create_image_buffer(disp.width, disp.height)
-        draw.text((32, 15), pm25, font=font, fill=255)
-        draw.text((32, 25), pm25val, font=font, fill=255)  
         # Display pm2.5 value
-        display_values(disp)    
-        time.sleep(5)
+        display_sensor_values(disp, {pm25, pm25val})
 
-        # Prepare pm10.0 value for display
-        # Create image buffer
-        image, draw = create_image_buffer(disp.width, disp.height)
-        draw.text((32, 15), pm100, font=font, fill=255)
-        draw.text((32, 25), pm100val, font=font, fill=255)
         # Display pm10.0 value
-        display_values(disp) 
-        time.sleep(5)
+        display_sensor_values(disp, {pm100, pm100val})
