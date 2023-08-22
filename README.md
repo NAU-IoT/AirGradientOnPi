@@ -32,7 +32,8 @@ This repository is aimed at developing a functional DIY Air Quality sensor based
 
 ## Wiring Diagram
 
-- coming soon...
+  <img width="1134" alt="Screen Shot 2023-08-22 at 4 41 33 PM" src="https://github.com/NAU-IoT/AirGradientOnPi/assets/72172361/709a9a90-fb5a-48a6-914a-ca861066eecc">
+
 
 
 ## Running With Python
