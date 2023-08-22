@@ -84,20 +84,22 @@ while True:
     disp.image(image)
     disp.display()
         
-    time.sleep(2)
+    time.sleep(5)
 
 
     # Prepare co2 for display
+    # Create image buffer
+    image = Image.new('1', (disp.width, disp.height))
+    draw = ImageDraw.Draw(image)
     draw.text((32, 15), co2, font=font, fill=255)
     draw.text((32, 25), co2val, font=font, fill=255)
-       
+
     # Display co2 value
     disp.clear()
     disp.image(image)
     disp.display()
         
-    time.sleep(2)
-
+    time.sleep(5)
 
     
     try:
@@ -125,6 +127,9 @@ while True:
     #pm100val = aqdata["pm100 env"]
     
     # Prepare pm1.0 value for display
+    # Create image buffer
+    image = Image.new('1', (disp.width, disp.height))
+    draw = ImageDraw.Draw(image)
     draw.text((32, 15), pm10, font=font, fill=255)
     draw.text((32, 25), pm10val, font=font, fill=255)
        
@@ -133,9 +138,12 @@ while True:
     disp.image(image)
     disp.display()
         
-    time.sleep(2)
+    time.sleep(5)
 
     # Prepare pm2.5 value for display
+    # Create image buffer
+    image = Image.new('1', (disp.width, disp.height))
+    draw = ImageDraw.Draw(image)
     draw.text((32, 15), pm25, font=font, fill=255)
     draw.text((32, 25), pm25val, font=font, fill=255)  
     # Display pm2.5 value
@@ -143,10 +151,13 @@ while True:
     disp.image(image)
     disp.display()
         
-    time.sleep(2)
+    time.sleep(5)
 
 
     # Prepare pm10.0 value for display
+    # Create image buffer
+    image = Image.new('1', (disp.width, disp.height))
+    draw = ImageDraw.Draw(image)
     draw.text((32, 15), pm100, font=font, fill=255)
     draw.text((32, 25), pm100val, font=font, fill=255)
        
@@ -155,4 +166,4 @@ while True:
     disp.image(image)
     disp.display()
         
-    time.sleep(2)
+    time.sleep(5)
