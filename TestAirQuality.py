@@ -22,6 +22,7 @@ def scd30_initialization():
     scd = adafruit_scd30.SCD30(i2c)
     # Raspberry Pi pin configuration:
     RST = 24
+    return scd
 
 
 def oled_initialization():
@@ -32,6 +33,7 @@ def oled_initialization():
     disp.display()
     # Load font
     font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 9)
+    return disp
 
 
 def pmsensor_initialization():
@@ -42,6 +44,7 @@ def pmsensor_initialization():
     uart = serial.Serial(serial_port, baudrate=baud_rate, timeout=0.25)
     # Initialize the PM2.5 sensor over UART
     pm25 = PM25_UART(uart)
+    return pm25
 
 def create_image_buffer(disp_width, disp_height):
     # Create image buffer
@@ -49,13 +52,30 @@ def create_image_buffer(disp_width, disp_height):
     draw = ImageDraw.Draw(image)
     return image, draw
 
+def display_values(disp):
+    disp.clear()
+    disp.image(image)
+    disp.display()
+
+
+def display_sensor_values(disp, values):
+    image, draw = create_image_buffer(disp.width, disp.height)
+    
+    y_coord = 15
+    for label, value in values.items():
+        text = f"{label}: {value}"
+        draw.text((32, y_coord), text, font=font, fill=255)
+        y_coord += 10
+    
+    display_values(disp)
+    
 
 def main():
-    scd30_initialization()
+    scd = scd30_initialization()
 
-    oled_initialization()
+    disp = oled_initialization()
 
-    pmsensor_initialization()
+    pm25 = pmsensor_initialization()
 
 
     while True:
@@ -71,109 +91,78 @@ def main():
             #print("")
             #print("Waiting for new data...")
             #print("")
-
         # Create image buffer
         image, draw = create_image_buffer(disp.width, disp.height)
+        # Assign values to variables
+        temp = "Temp: "
+        tempval = ("%.2f F" %fTemp)
+        hum = "Humidity: "
+        humval = ("%.2f %%RH" %humidity)
+        # Prepare temp and hum for display
+        draw.text((32, 15), temp, font=font, fill=255)
+        draw.text((32, 25), tempval, font=font, fill=255)
+        draw.text((32, 40), hum, font=font, fill=255)
+        draw.text((32, 50), humval, font=font, fill=255)
+        # Display temp and humidity
+        display_values(disp) 
+        time.sleep(5)
 
-    # Assign values to variables
-    temp = "Temp: "
-    tempval = ("%.2f F" %fTemp)
-    hum = "Humidity: "
-    humval = ("%.2f %%RH" %humidity)
-    co2 = "CO2: "
-    co2val = ("%.2f PPM" %co2ppm)
+        # Assign values to variables
+        co2 = "CO2: "
+        co2val = ("%.2f PPM" %co2ppm)
+        # Prepare co2 for display
+        # Create image buffer
+        image, draw = create_image_buffer(disp.width, disp.height)
+        draw.text((32, 15), co2, font=font, fill=255)
+        draw.text((32, 25), co2val, font=font, fill=255)
+        # Display co2 value
+        display_values(disp)
+        time.sleep(5)
 
-    # Prepare temp and hum for display
-    draw.text((32, 15), temp, font=font, fill=255)
-    draw.text((32, 25), tempval, font=font, fill=255)
-    draw.text((32, 40), hum, font=font, fill=255)
-    draw.text((32, 50), humval, font=font, fill=255)
+        try:
+            aqdata = pm25.read()
+        except RuntimeError as e:
+            print("Error reading from sensor:", e)
+            print("Retrying...")
+            continue
+        # Assign standard particle data to variables
+        pm10 = "PM1.0: "
+        pm10val = ("%.2f ug/m^3" %aqdata["pm10 standard"])
+        pm25 = "PM2.5: "
+        pm25val = ("%.2f ug/m^3" %aqdata["pm25 standard"])
+        pm100 = "PM10: "
+        pm100val = ("%.2f ug/m^3" %aqdata["pm100 standard"])
+        # Assign environmental particle data to variables
+        #pm1 = "PM1.0: "
+        #pm10val = (aqdata["pm10 env"]
+        #pm25 = "PM2.5: "
+        #pm25val = aqdata["pm25 env"]
+        #pm10 = "PM10: "
+        #pm100val = aqdata["pm100 env"]
         
-    # Display temp and humidity
-    disp.clear()
-    disp.image(image)
-    disp.display()
-        
-    time.sleep(5)
+        # Prepare pm1.0 value for display
+        # Create image buffer
+        image, draw = create_image_buffer(disp.width, disp.height)
+        draw.text((32, 15), pm10, font=font, fill=255)
+        draw.text((32, 25), pm10val, font=font, fill=255)
+        # Display pm1.0 value
+        display_values(disp)
+        time.sleep(5)
 
+        # Prepare pm2.5 value for display
+        # Create image buffer
+        image, draw = create_image_buffer(disp.width, disp.height)
+        draw.text((32, 15), pm25, font=font, fill=255)
+        draw.text((32, 25), pm25val, font=font, fill=255)  
+        # Display pm2.5 value
+        display_values(disp)    
+        time.sleep(5)
 
-    # Prepare co2 for display
-    # Create image buffer
-    image = Image.new('1', (disp.width, disp.height))
-    draw = ImageDraw.Draw(image)
-    draw.text((32, 15), co2, font=font, fill=255)
-    draw.text((32, 25), co2val, font=font, fill=255)
-
-    # Display co2 value
-    disp.clear()
-    disp.image(image)
-    disp.display()
-        
-    time.sleep(5)
-
-    
-    try:
-        aqdata = pm25.read()
-    except RuntimeError as e:
-        print("Error reading from sensor:", e)
-        print("Retrying...")
-        continue
-
-
-    # Assign standard particle data to variables
-    pm10 = "PM1.0: "
-    pm10val = ("%.2f ug/m^3" %aqdata["pm10 standard"])
-    pm25 = "PM2.5: "
-    pm25val = ("%.2f ug/m^3" %aqdata["pm25 standard"])
-    pm100 = "PM10: "
-    pm100val = ("%.2f ug/m^3" %aqdata["pm100 standard"])
-
-    # Assign environmental particle data to variables
-    #pm1 = "PM1.0: "
-    #pm10val = (aqdata["pm10 env"]
-    #pm25 = "PM2.5: "
-    #pm25val = aqdata["pm25 env"]
-    #pm10 = "PM10: "
-    #pm100val = aqdata["pm100 env"]
-    
-    # Prepare pm1.0 value for display
-    # Create image buffer
-    image = Image.new('1', (disp.width, disp.height))
-    draw = ImageDraw.Draw(image)
-    draw.text((32, 15), pm10, font=font, fill=255)
-    draw.text((32, 25), pm10val, font=font, fill=255)
-       
-    # Display pm1.0 value
-    disp.clear()
-    disp.image(image)
-    disp.display()
-        
-    time.sleep(5)
-
-    # Prepare pm2.5 value for display
-    # Create image buffer
-    image = Image.new('1', (disp.width, disp.height))
-    draw = ImageDraw.Draw(image)
-    draw.text((32, 15), pm25, font=font, fill=255)
-    draw.text((32, 25), pm25val, font=font, fill=255)  
-    # Display pm2.5 value
-    disp.clear()
-    disp.image(image)
-    disp.display()
-        
-    time.sleep(5)
-
-
-    # Prepare pm10.0 value for display
-    # Create image buffer
-    image = Image.new('1', (disp.width, disp.height))
-    draw = ImageDraw.Draw(image)
-    draw.text((32, 15), pm100, font=font, fill=255)
-    draw.text((32, 25), pm100val, font=font, fill=255)
-       
-    # Display pm10.0 value
-    disp.clear()
-    disp.image(image)
-    disp.display()
-        
-    time.sleep(5)
+        # Prepare pm10.0 value for display
+        # Create image buffer
+        image, draw = create_image_buffer(disp.width, disp.height)
+        draw.text((32, 15), pm100, font=font, fill=255)
+        draw.text((32, 25), pm100val, font=font, fill=255)
+        # Display pm10.0 value
+        display_values(disp) 
+        time.sleep(5)
