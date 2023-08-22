@@ -1,99 +1,169 @@
-#import libraries
-import network
-import TAQconfiguration as config
+import Adafruit_SSD1306
 import time
-from senseair_s8 import SenseairS8
-import smbus
 import board
 import busio
-from digitalio import DigitalInOut, Direction, Pull
-from adafruit_pm25.i2c import PM25_I2C
+import adafruit_scd30
+from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
 import serial
-
-#initialize variables from config file
-SSID = config.ssid
-PASSWORD = config.password
-TEMP_SCALE = config.temp_scale
-
-# connect the pi to the internet
-wlan = network.WLAN(network.STA_IF)
-wlan.active(True)
-wlan.connect(SSID, PASSWORD)
-print(wlan.isconnected())
+from adafruit_pm25.uart import PM25_UART
 
 
-uart = serial.Serial("/dev/ttyS0", baudrate=9600, timeout=0.25)
-# Create library object, use 'slow' 100KHz frequency!
-i2c = busio.I2C(board.SCL, board.SDA, frequency=100000)
-# Connect to a PM2.5 sensor over I2C
-pm25 = PM25_I2C(i2c, reset_pin)
+def celsius_to_fahrenheit(celsius):
+    fahrenheit = (celsius * 9/5) + 32
+    return fahrenheit
 
-print("Found PM2.5 sensor, reading data...")
+#        SCD-30ˇˇˇˇˇˇ
+# SCD-30 has tempremental I2C with clock stretching, datasheet recommends
+# starting at 50KHz
+i2c = busio.I2C(board.SCL, board.SDA, frequency=50000)
+scd = adafruit_scd30.SCD30(i2c)
+
+# Raspberry Pi pin configuration:
+RST = 24
+
+#        OLEDˇˇˇˇˇˇ
+# Initialize OLED display
+disp = Adafruit_SSD1306.SSD1306_128_64(rst=RST, i2c_address=0x3C, i2c_bus=1)
+disp.begin()
+disp.clear()
+disp.display()
+
+# Load font
+font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 9)
+
+#        PM2.5ˇˇˇˇˇ
+# Define the serial port and baud rate
+serial_port = "/dev/ttyS0"
+baud_rate = 9600
+
+# Initialize the serial connection
+uart = serial.Serial(serial_port, baudrate=baud_rate, timeout=0.25)
+
+# Initialize the PM2.5 sensor over UART
+pm25 = PM25_UART(uart)
 
 
+while True:
+    # since the measurement interval is long (2+ seconds) we check for new data before reading
+    # the values, to ensure current readings.
+    if scd.data_available:
+        print("Data Available!")
+        print("CO2: %d PPM" % scd.CO2)
+        cTemp = scd.temperature
+        fTemp = (cTemp * 9/5) + 32
+        co2ppm = scd.CO2
+        humidity = scd.relative_humidity
+        print("Temperature in Fahrenheit : %.2f F" %fTemp)
+        print("Relative Humidity : %.2f %%RH" %humidity)
+        print("")
+        print("Waiting for new data...")
+        print("")
 
-while(True)
-# Senseair s8
-    senseair_s8 = SenseairS8() 
-    # get CO2 value
-    CO2 = senseair_s8.co2()
+    # Create image buffer
+    image = Image.new('1', (disp.width, disp.height))
+    draw = ImageDraw.Draw(image)
 
-# SHT30
-    # Get I2C bus
-    bus = smbus.SMBus(1)
-    # SHT30 address, 0x44(68)
-    # Send measurement command, 0x2C(44)
-    #		0x06(06)	High repeatability measurement
-    bus.write_i2c_block_data(0x44, 0x2C, [0x06])
-    time.sleep(0.5)
-    # SHT30 address, 0x44(68)
-    # Read data back from 0x00(00), 6 bytes
-    # cTemp MSB, cTemp LSB, cTemp CRC, Humididty MSB, Humidity LSB, Humidity CRC
-    data = bus.read_i2c_block_data(0x44, 0x00, 6)
-    # Calculate the data
-    cTemp = ((((data[0] * 256.0) + data[1]) * 175) / 65535.0) - 45
-    fTemp = cTemp * 1.8 + 32
-    humidity = 100 * (data[3] * 256 + data[4]) / 65535.0
+    # Assign values to variables
+    temp = "Temp: "
+    tempval = ("%.2f F" %fTemp)
+    hum = "Humidity: "
+    humval = ("%.2f %%RH" %humidity)
+    co2 = "CO2: "
+    co2val = ("%.2f PPM" %co2ppm)
 
-# PM2.5
-    reset_pin = None
-    # If you have a GPIO, its not a bad idea to connect it to the RESET pin
-    # reset_pin = DigitalInOut(board.G0)    
-    # reset_pin.direction = Direction.OUTPUT
-    # reset_pin.value = False
+    # Prepare temp and hum for display
+    draw.text((32, 15), temp, font=font, fill=255)
+    draw.text((32, 25), tempval, font=font, fill=255)
+    draw.text((32, 40), hum, font=font, fill=255)
+    draw.text((32, 50), humval, font=font, fill=255)
+        
+    # Display temp and humidity
+    disp.clear()
+    disp.image(image)
+    disp.display()
+        
+    time.sleep(5)
 
-    time.sleep(1)
 
+    # Prepare co2 for display
+    # Create image buffer
+    image = Image.new('1', (disp.width, disp.height))
+    draw = ImageDraw.Draw(image)
+    draw.text((32, 15), co2, font=font, fill=255)
+    draw.text((32, 25), co2val, font=font, fill=255)
+
+    # Display co2 value
+    disp.clear()
+    disp.image(image)
+    disp.display()
+        
+    time.sleep(5)
+
+    
     try:
         aqdata = pm25.read()
-        # print(aqdata)
-    except RuntimeError:
-        print("Unable to read from sensor, retrying...")
+    except RuntimeError as e:
+        print("Error reading from sensor:", e)
+        print("Retrying...")
         continue
 
-    print()
-    print("Concentration Units (standard)")
-    print("---------------------------------------")
-    print(
-        "PM 1.0: %d\tPM2.5: %d\tPM10: %d"
-        % (aqdata["pm10 standard"], aqdata["pm25 standard"], aqdata["pm100 standard"])
-    )
-    print("Concentration Units (environmental)")
-    print("---------------------------------------")
-    print(
-        "PM 1.0: %d\tPM2.5: %d\tPM10: %d"
-        % (aqdata["pm10 env"], aqdata["pm25 env"], aqdata["pm100 env"])
-    )
-    print("---------------------------------------")
-    print("Particles > 0.3um / 0.1L air:", aqdata["particles 03um"])
-    print("Particles > 0.5um / 0.1L air:", aqdata["particles 05um"])
-    print("Particles > 1.0um / 0.1L air:", aqdata["particles 10um"])
-    print("Particles > 2.5um / 0.1L air:", aqdata["particles 25um"])
-    print("Particles > 5.0um / 0.1L air:", aqdata["particles 50um"])
-    print("Particles > 10 um / 0.1L air:", aqdata["particles 100um"])
-    print("---------------------------------------")
+
+    # Assign standard particle data to variables
+    pm10 = "PM1.0: "
+    pm10val = ("%.2f ug/m^3" %aqdata["pm10 standard"])
+    pm25 = "PM2.5: "
+    pm25val = ("%.2f ug/m^3" %aqdata["pm25 standard"])
+    pm100 = "PM10: "
+    pm100val = ("%.2f ug/m^3" %aqdata["pm100 standard"])
+
+    # Assign environmental particle data to variables
+    #pm1 = "PM1.0: "
+    #pm10val = (aqdata["pm10 env"]
+    #pm25 = "PM2.5: "
+    #pm25val = aqdata["pm25 env"]
+    #pm10 = "PM10: "
+    #pm100val = aqdata["pm100 env"]
     
-    
+    # Prepare pm1.0 value for display
+    # Create image buffer
+    image = Image.new('1', (disp.width, disp.height))
+    draw = ImageDraw.Draw(image)
+    draw.text((32, 15), pm10, font=font, fill=255)
+    draw.text((32, 25), pm10val, font=font, fill=255)
+       
+    # Display pm1.0 value
+    disp.clear()
+    disp.image(image)
+    disp.display()
+        
+    time.sleep(5)
+
+    # Prepare pm2.5 value for display
+    # Create image buffer
+    image = Image.new('1', (disp.width, disp.height))
+    draw = ImageDraw.Draw(image)
+    draw.text((32, 15), pm25, font=font, fill=255)
+    draw.text((32, 25), pm25val, font=font, fill=255)  
+    # Display pm2.5 value
+    disp.clear()
+    disp.image(image)
+    disp.display()
+        
+    time.sleep(5)
 
 
-   
+    # Prepare pm10.0 value for display
+    # Create image buffer
+    image = Image.new('1', (disp.width, disp.height))
+    draw = ImageDraw.Draw(image)
+    draw.text((32, 15), pm100, font=font, fill=255)
+    draw.text((32, 25), pm100val, font=font, fill=255)
+       
+    # Display pm10.0 value
+    disp.clear()
+    disp.image(image)
+    disp.display()
+        
+    time.sleep(5)
