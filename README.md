@@ -10,25 +10,6 @@ This repository is aimed at developing a functional DIY Air Quality sensor based
 - [PMS5003](https://www.adafruit.com/product/3686) - Measures Particulate Matter Concentrations
 
 
-## Dependencies
-- Install Dependencies:
-  - Install OLED Library:
-    ```
-    sudo pip install adafruit-circuitpython-ssd1306
-    ```
-  - Install SCD30 library:
-    ```
-    sudo pip install adafruit-circuitpython-scd30
-    ```
-  - Install Python Imaging Library:
-    ```
-    sudo pip install Pillow
-    ```
-  - Install PM25 Library:
-    ```
-    sudo pip install adafruit-circuitpython-pm25
-    ```
-
 
 ## Wiring Diagram
 
@@ -89,6 +70,24 @@ This repository is aimed at developing a functional DIY Air Quality sensor based
 
 
 ## Running With Python
+
+- Install Dependencies:
+  - Install OLED Library:
+    ```
+    sudo pip install adafruit-circuitpython-ssd1306
+    ```
+  - Install SCD30 library:
+    ```
+    sudo pip install adafruit-circuitpython-scd30
+    ```
+  - Install Python Imaging Library:
+    ```
+    sudo pip install Pillow
+    ```
+  - Install PM25 Library:
+    ```
+    sudo pip install adafruit-circuitpython-pm25
+    ```
 
 - Clone This Repository:
   ```
