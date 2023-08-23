@@ -79,6 +79,17 @@ This repository is aimed at developing a functional DIY Air Quality sensor based
   
     <img width="764" alt="Screen Shot 2023-08-22 at 2 16 17 PM" src="https://github.com/NAU-IoT/AirGradientOnPi/assets/72172361/9b341d64-a712-446a-8ae5-afa4c6184938">
 
+- Change into directory:
+  ```
+  cd AirGradientOnPi
+  ```
+
+- Execute script:
+  ```
+  sudo python3 TestAirQuality.py
+  ```
+
+- Done!
 
 
 
