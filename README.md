@@ -70,6 +70,12 @@ Also containerized with docker for easy replication
   docker exec -it CONTAINER_ID /bin/bash
   ```
 
+  - If error: `Got permission denied while trying to connect to the Docker daemon socket at unix ... connect: permission denied`
+    - Run command, then log out and ssh back into system:
+      ```
+      sudo usermod -aG docker $USER
+      ```
+
 
 ## Running With Python
 
