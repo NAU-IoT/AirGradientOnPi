@@ -17,17 +17,17 @@ ENV TZ=America/Phoenix
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Copy necessary files to local docker container environment
-ADD TestAirQuality.py /TestAirQuality.py
-ADD TestAirQuality.sh /TestAirQuality.sh
+ADD AirQuality.py /AirQuality.py
+ADD AirQuality.sh /AirQuality.sh
 
 # Create necessary files and directories inside docker container
 RUN mkdir -p /Data
 RUN mkdir -p /Data/logs
 
 # Establish correct permissions for files
-RUN chmod +x /TestAirQuality.py
-RUN chmod +x /TestAirQuality.sh
+RUN chmod +x /AirQuality.py
+RUN chmod +x /AirQuality.sh
 
 # Execute script
-CMD ./TestAirQuality.sh \ 
+CMD ./AirQuality.sh \ 
     && bash
