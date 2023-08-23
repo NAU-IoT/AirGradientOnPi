@@ -71,15 +71,21 @@ This repository is aimed at developing a functional DIY Air Quality sensor based
     YOUR_VOLUME_NAME
   ```
   - Execute docker container in AirGradientOnPi directory:
-    - Note for IoT Team: Your_port_number could be 31883, container_port_number should be 31883
   ```
-  docker run --privileged -v YOUR_VOLUME_NAME:/Data -p YOUR_PORT_NUMBER:CONTAINER_PORT_NUMBER -t -i -d --restart unless-stopped airquality
+  docker run --privileged -v YOUR_VOLUME_NAME:/Data -t -i -d --restart unless-stopped airquality
   ```
   - Verify container is running: 
   ```
   docker ps
   ```
   - Done!
+
+### Notes
+  - To enter the container:
+    - This can be done to check log files or modify the container without rebuilding/restarting
+  ```
+  docker exec -it CONTAINER_ID /bin/bash
+  ```
 
 
 ## Running With Python
