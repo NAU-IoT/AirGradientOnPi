@@ -81,12 +81,12 @@ This repository is aimed at developing a functional DIY Air Quality sensor based
 
 - Change into directory:
   ```
-  cd AirGradientOnPi
+  cd /AirGradientOnPi
   ```
 
 - Execute script:
   ```
-  sudo python3 TestAirQuality.py
+  sudo python3 AirQuality.py
   ```
 
 - Done!
