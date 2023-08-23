@@ -35,6 +35,52 @@ This repository is aimed at developing a functional DIY Air Quality sensor based
   <img width="1134" alt="Screen Shot 2023-08-22 at 4 41 33 PM" src="https://github.com/NAU-IoT/AirGradientOnPi/assets/72172361/709a9a90-fb5a-48a6-914a-ca861066eecc">
 
 
+## Running with Docker
+
+  - Install docker:
+  ```
+  sudo apt install docker.io
+  ```
+  - Check if docker is functioning:
+  ```
+  sudo docker run hello-world
+  ```
+  - Clone repository to get Dockerfile and configuration files: 
+  ```
+  git clone https://github.com/NAU-IoT/AirGradientOnPi.git
+  ```
+  - Change into directory: 
+  ```
+  cd AirGradientOnPi
+  ```
+  - OPTIONAL: To change the docker containers time zone, edit line 16 in the Dockerfile. A list of acceptable time zones can be found at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones 
+  - Build docker image in AirGradientOnPi directory, this will take a while: 
+  ```
+  docker build -t airquality .
+  ```
+  - Create a directory in a convenient location to store the docker volume. For example: 
+  ```
+  mkdir -p Data/AirQuality
+  ```
+  - Create a volume to store data inside the directory created in the previous step:
+  ```
+  docker volume create --driver local \
+    --opt type=none \
+    --opt device=/SOME/LOCAL/DIRECTORY \
+    --opt o=bind \
+    YOUR_VOLUME_NAME
+  ```
+  - Execute docker container in AirGradientOnPi directory:
+    - Note for IoT Team: Your_port_number could be 31883, container_port_number should be 31883
+  ```
+  docker run --privileged -v YOUR_VOLUME_NAME:/Data -p YOUR_PORT_NUMBER:CONTAINER_PORT_NUMBER -t -i -d --restart unless-stopped airquality
+  ```
+  - Verify container is running: 
+  ```
+  docker ps
+  ```
+  - Done!
+
 
 ## Running With Python
 
@@ -81,7 +127,7 @@ This repository is aimed at developing a functional DIY Air Quality sensor based
 
 - Change into directory:
   ```
-  cd /AirGradientOnPi
+  cd AirGradientOnPi
   ```
 
 - Execute script:
