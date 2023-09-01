@@ -1,6 +1,8 @@
 # AirGradientOnPi
 This repository is aimed at developing a functional DIY Air Quality sensor based on AirGradient: https://www.airgradient.com/open-airgradient/instructions/diy/ except using a Raspberry Pi Zero with python instead of a D1 Mini Pro with Arduino/C++
 
+Also containerized with docker for easy replication
+
 
 ## List of Parts:
 
@@ -10,39 +12,15 @@ This repository is aimed at developing a functional DIY Air Quality sensor based
 - [PMS5003](https://www.adafruit.com/product/3686) - Measures Particulate Matter Concentrations
 
 
-## Dependencies
-- Install Dependencies:
-  - Install OLED Library:
-    ```
-    sudo pip install adafruit-circuitpython-ssd1306
-    ```
-  - Install SCD30 library:
-    ```
-    sudo pip install adafruit-circuitpython-scd30
-    ```
-  - Install Python Imaging Library:
-    ```
-    sudo pip install Pillow
-    ```
-  - Install PM25 Library:
-    ```
-    sudo pip install adafruit-circuitpython-pm25
-    ```
-
 
 ## Wiring Diagram
 
   <img width="1134" alt="Screen Shot 2023-08-22 at 4 41 33 PM" src="https://github.com/NAU-IoT/AirGradientOnPi/assets/72172361/709a9a90-fb5a-48a6-914a-ca861066eecc">
 
 
+## Enabling UART and I2C
 
-## Running With Python
-
-- Clone This Repository:
-  ```
-  git clone https://github.com/NAU-IoT/AirGradientOnPi.git
-  ```
-- Ensure I2C and UART are enabled:
+- I2C and UART must be enabled to work correctly:
   ```
   sudo raspi-config
   ```
@@ -79,6 +57,91 @@ This repository is aimed at developing a functional DIY Air Quality sensor based
   
     <img width="764" alt="Screen Shot 2023-08-22 at 2 16 17 PM" src="https://github.com/NAU-IoT/AirGradientOnPi/assets/72172361/9b341d64-a712-446a-8ae5-afa4c6184938">
 
+
+## Running with Docker
+
+  - Install docker:
+  ```
+  sudo apt install docker.io
+  ```
+  - Check if docker is functioning:
+  ```
+  sudo docker run hello-world
+  ```
+  - Clone repository to get Dockerfile and configuration files: 
+  ```
+  git clone https://github.com/NAU-IoT/AirGradientOnPi.git
+  ```
+  - Change into directory: 
+  ```
+  cd AirGradientOnPi
+  ```
+  - OPTIONAL: To change the docker containers time zone, edit line 16 in the Dockerfile. A list of acceptable time zones can be found at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones 
+  - Build docker image in AirGradientOnPi directory, this will take a while: 
+  ```
+  docker build -t airquality .
+  ```
+  - Create a directory in a convenient location to store the docker volume. For example: 
+  ```
+  mkdir -p Data/AirQuality
+  ```
+  - Create a volume to store data inside the directory created in the previous step:
+  ```
+  docker volume create --driver local \
+    --opt type=none \
+    --opt device=/SOME/LOCAL/DIRECTORY \
+    --opt o=bind \
+    YOUR_VOLUME_NAME
+  ```
+  - Execute docker container in AirGradientOnPi directory:
+  ```
+  docker run --privileged -v YOUR_VOLUME_NAME:/Data -t -i -d --restart unless-stopped airquality
+  ```
+  - Verify container is running: 
+  ```
+  docker ps
+  ```
+  - Done!
+
+### Notes
+  - To enter the container:
+    - This can be done to check log files or modify the container without rebuilding/restarting
+  ```
+  docker exec -it CONTAINER_ID /bin/bash
+  ```
+
+  - If error: `Got permission denied while trying to connect to the Docker daemon socket at unix ... connect: permission denied`
+    - Run command, then log out and ssh back into system:
+      ```
+      sudo usermod -aG docker $USER
+      ```
+
+
+## Running With Python
+
+- Install Dependencies:
+  - Install OLED Library:
+    ```
+    sudo pip install adafruit-circuitpython-ssd1306
+    ```
+  - Install SCD30 library:
+    ```
+    sudo pip install adafruit-circuitpython-scd30
+    ```
+  - Install Python Imaging Library:
+    ```
+    sudo pip install Pillow
+    ```
+  - Install PM25 Library:
+    ```
+    sudo pip install adafruit-circuitpython-pm25
+    ```
+
+- Clone This Repository:
+  ```
+  git clone https://github.com/NAU-IoT/AirGradientOnPi.git
+  ```
+
 - Change into directory:
   ```
   cd AirGradientOnPi
@@ -86,7 +149,7 @@ This repository is aimed at developing a functional DIY Air Quality sensor based
 
 - Execute script:
   ```
-  sudo python3 TestAirQuality.py
+  sudo python3 AirQuality.py
   ```
 
 - Done!
