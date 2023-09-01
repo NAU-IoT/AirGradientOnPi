@@ -76,7 +76,7 @@ Also containerized with docker for easy replication
   ```
   cd AirGradientOnPi
   ```
-  - OPTIONAL: To change the docker containers time zone, edit line 16 in the Dockerfile. A list of acceptable time zones can be found at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones 
+  - OPTIONAL: To change the docker containers time zone, edit line 15 in the Dockerfile. A list of acceptable time zones can be found at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones 
   - Build docker image in AirGradientOnPi directory, this will take a while: 
   ```
   docker build -t airquality .
