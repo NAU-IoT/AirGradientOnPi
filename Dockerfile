@@ -1,6 +1,5 @@
 # syntax=docker/dockerfile:1
-
-FROM ubuntu:22.04
+FROM python:latest
 
 # Update package list
 RUN apt-get update
@@ -9,7 +8,7 @@ RUN apt-get update
 RUN apt-get install -y python3 python3-pip i2c-tools
 
 # Install pip dependencies
-RUN pip install adafruit-circuitpython-ssd1306 adafruit-circuitpython-scd30 Pillow adafruit-circuitpython-pm25
+RUN pip install Adafruit-SSD1306 adafruit-circuitpython-scd30 adafruit-circuitpython-pm25 RPi.GPIO pillow
 
 # Install timezone dependencies and establish docker container timezone
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata
@@ -29,5 +28,5 @@ RUN chmod +x /AirQuality.py
 RUN chmod +x /AirQuality.sh
 
 # Execute script
-CMD ./AirQuality.sh \ 
+CMD ./AirQuality.sh \
     && bash
